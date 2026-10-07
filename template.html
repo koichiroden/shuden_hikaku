@@ -1,0 +1,312 @@
+<title>詰み度アニメ</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@500;700;900&display=swap">
+<style>
+/* layout: 16:9の映像ステージを中央に1枚、その下に再生コントロール。夜の駅の一色で統一(単一テーマ) */
+:root{color-scheme:dark;--bg:#080a14;--panel:#141a30;--fg:#eef0f8;--muted:#8f97b8;--line:#2a3152;--led:#ffb02e;
+  --font-body:"Zen Kaku Gothic New","Noto Sans JP","Noto Sans CJK JP","Hiragino Sans","Yu Gothic",Meiryo,sans-serif}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);padding-inline:16px;padding-block:16px 32px}
+.wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+#stage{background:var(--bg);display:flex;flex-direction:column;gap:10px}
+canvas{width:100%;max-width:100%;aspect-ratio:16/9;display:block;background:#0b0e1c;border:1px solid var(--line);border-radius:4px}
+#stage:fullscreen{padding:12px;justify-content:center}
+#stage:fullscreen canvas{max-height:calc(100vh - 80px);width:auto;margin:0 auto}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.ctl input[type=range]{flex:1;min-width:140px;accent-color:var(--led)}
+button,select{font:inherit;font-size:14px;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:7px 14px;cursor:pointer}
+#play{background:var(--led);color:#0b0e1c;border-color:var(--led);font-weight:700;min-width:92px}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--led);outline-offset:2px}
+#time{font-variant-numeric:tabular-nums;font-size:14px;color:var(--muted);min-width:96px}
+p{margin:0;font-size:13px;color:var(--muted);line-height:1.7}
+</style>
+
+<div class="wrap">
+  <div id="stage">
+    <canvas id="cv" lang="ja" width="1920" height="1080"></canvas>
+    <div class="ctl">
+      <button type="button" id="play">再生</button>
+      <input type="range" id="seek" min="0" max="1000" value="0">
+      <span id="time">0:00 / 0:00</span>
+      <select id="speed"><option value="1">1.0倍</option><option value="1.5">1.5倍</option><option value="2">2.0倍</option><option value="4">4.0倍</option></select>
+      <button type="button" id="full">全画面</button>
+    </div>
+  </div>
+  <p>音声はありません。字幕の進みは1秒あたり約6文字の読み上げ速度を想定しています。数字はいただいた原稿のサンプル値のままです。</p>
+</div>
+
+<script>
+const D=/*__D__*/null;
+const AX=["待ち時間","タクシー","宿","暇つぶし","コンビニ","気温"],WT=[5,4,4,2,2,3];
+const SC=/*__SC__*/null;
+const BASE=SC.findIndex(s=>s.k=="wait"),RULES=[["始発までの待ち時間",5,"4時間未満","4:00〜4:20","4:20〜4:40","4:40〜5:00","5時間以上"],["タクシー帰還コスト",4,"5千円未満","5千〜1万円","1〜2万円","2〜3万円","3万円以上"],["泊まれる場所",4,"4軒以上","3軒","2軒","1軒","0軒"],["時間を潰せる場所",2,"4軒以上","3軒","2軒","1軒","0軒"],["24時間コンビニ",2,"4店以上","3店","2店","1店","0店"],["冬の最低気温",3,"2℃以上","0〜2℃","-2〜0℃","-4〜-2℃","-4℃未満"]];
+let TOTAL=0;
+SC.forEach(s=>{s.se=s.t.split(/(?<=。)/);s.ss=[];let a=0.4+(s.pre||0);s.se.forEach((x,i)=>{s.ss.push(a);a+=(s.d?s.d[i]:x.length/D.cps)+0.3+(i==0&&s.gap||0)});s.dur=a+0.5+(s.end||0);s.start=TOTAL;TOTAL+=s.dur});
+
+const cv=document.getElementById("cv"),c=cv.getContext("2d"),W=1920,H=1080;
+document.documentElement.lang="ja";try{c.lang="ja"}catch(e){} // 漢字を日本語の字形で描く
+const C={bg:"#0b0e1c",panel:"#141a30",fg:"#eef0f8",muted:"#8f97b8",line:"#2a3152",led:"#ffb02e",hot:"#ff5d7d",cool:"#5ec8ff"};
+const F='"Zen Kaku Gothic New","Noto Sans JP","Noto Sans CJK JP","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif',LED='"DotGothic16",'+F;
+const cl=x=>Math.max(0,Math.min(1,x)),ez=p=>1-Math.pow(1-cl(p),3);
+let S,lt; // 現在のシーンとシーン内の経過秒
+const A=(k,d=0,dur=.6)=>ez((lt-S.ss[Math.min(k,S.ss.length-1)]-d)/dur);
+const last=()=>S.ss.length-1;
+function tx(s,x,y,size,col,al="left",w=700,f=F,a=1){if(a<=0)return;c.globalAlpha=a;c.font=`${w} ${size}px ${f}`;c.fillStyle=col;c.textAlign=al;c.textBaseline="alphabetic";c.fillText(s,x,y);c.globalAlpha=1}
+function rr(x,y,w,h,r,fill,stroke,a=1){c.globalAlpha=a;c.beginPath();c.roundRect(x,y,w,h,r);if(fill){c.fillStyle=fill;c.fill()}if(stroke){c.strokeStyle=stroke;c.lineWidth=3;c.stroke()}c.globalAlpha=1}
+function wrap(s,max){const out=[];let cur="";for(const ch of s){if(c.measureText(cur+ch).width>max&&cur&&!'。、」?!'.includes(ch)){out.push(cur);cur=ch}else cur+=ch}if(cur)out.push(cur);return out}
+
+function stars(){c.fillStyle=C.bg;c.fillRect(0,0,W,H);c.fillStyle="#1a2140";for(let i=0;i<70;i++){const x=(i*397)%W,y=(i*211)%820;c.fillRect(x,y,3,3)}}
+function subtitle(){
+  if(lt<S.ss[0]-.05){c.fillStyle="rgba(5,6,12,.86)";c.fillRect(0,884,W,196);return}
+  let i=0;for(let k=0;k<S.ss.length;k++)if(lt>=S.ss[k])i=k;
+  c.fillStyle="rgba(5,6,12,.86)";c.fillRect(0,884,W,196);
+  c.font=`700 48px ${F}`;const ls=wrap(S.se[i],1660);
+  ls.forEach((l,n)=>tx(l,W/2,(ls.length>1?955:990)+n*66,48,C.fg,"center"));
+}
+function brand(){tx("終電で寝過ごしたら詰む駅",80,78,34,C.led,"left",400,LED);tx(D.station,520,78,34,C.fg,"left",400,LED)}
+function header(){let hs=68;c.font=`900 ${hs}px ${F}`;while(c.measureText(S.h).width>890&&hs>36){hs-=2;c.font=`900 ${hs}px ${F}`}tx(S.h,80,190,hs,C.fg,"left",900);if(S.sub)tx(S.sub,80,244,32,C.muted,"left",500);
+  const i=SC.indexOf(S)-BASE;rr(1000,140,200,58,6,null,C.led);tx("重み ×"+WT[i],1100,181,32,C.led,"center")}
+function src(k){tx("出典："+D.src[k],80,866,26,C.muted,"left",500)}
+function stamp(sc){const a=A(last(),.9,.5);if(a<=0)return;const s=1.6-.6*a;c.save();c.translate(1090,760);c.rotate(-.12);c.scale(s,s);
+  c.globalAlpha=a;c.beginPath();c.arc(0,0,92,0,7);c.fillStyle=C.bg;c.fill();c.strokeStyle=C.hot;c.lineWidth=8;c.stroke();
+  tx(sc+"点",0,26,74,C.hot,"center",900,F,a);c.restore()}
+
+const CATC=["#ffb02e","#ff5d7d","#5ec8ff","#7fd88f"],CATN=["いつ帰れるか","いくらで帰れるか","朝まで過ごせる場所","外で待てるか"],CAT=[0,1,2,2,2,3];
+function radar(vals,cx=1560,cy=500,R=230,cols){
+  const pt=(i,r)=>{const a=-Math.PI/2+i*Math.PI/3;return[cx+Math.cos(a)*r,cy+Math.sin(a)*r]};
+  for(let k=1;k<=5;k++){c.beginPath();for(let i=0;i<6;i++){const[x,y]=pt(i,R*k/5);i?c.lineTo(x,y):c.moveTo(x,y)}c.closePath();c.strokeStyle=C.line;c.lineWidth=2;c.stroke()}
+  for(let i=0;i<6;i++){const[x,y]=pt(i,R);c.beginPath();c.moveTo(cx,cy);c.lineTo(x,y);c.strokeStyle=C.line;c.stroke();
+    const[lx,ly]=pt(i,R+58),on=vals[i]>0;tx(AX[i],lx,ly,cols&&cols[i]?34:30,cols&&cols[i]||(on?C.fg:C.muted),"center",cols&&cols[i]?900:700);
+    tx(on?Math.round(vals[i])+"点":"?",lx,ly+38,30,on?C.led:C.muted,"center",700)}
+  c.beginPath();for(let i=0;i<6;i++){const[x,y]=pt(i,R*vals[i]/5);i?c.lineTo(x,y):c.moveTo(x,y)}c.closePath();
+  c.fillStyle="rgba(255,176,46,.3)";c.fill();c.strokeStyle=C.led;c.lineWidth=5;c.lineJoin="round";c.stroke();
+}
+function radarNow(){const si=SC.indexOf(S);return D.scores.map((v,j)=>{const sj=j+BASE;return si>sj?v:si==sj?v*A(last(),.9,.8):0})}
+
+const ICON={"ビジネスホテル":"hotel","ネットカフェ":"net","深夜営業の入浴施設":"bath","カラオケ":"kara","24時間ファミレス":"fami","24時間営業":"conv","最寄りまで徒歩":"walk","1月の平均最低気温":"cold","8月の平均最低気温":"warm"};
+// ピクトグラム風アイコン。100×100の枠に単色で描く
+function ico(name,x,y,s,col){c.save();c.translate(x,y);c.scale(s/100,s/100);c.fillStyle=c.strokeStyle=col;c.lineWidth=8;c.lineCap="round";c.lineJoin="round";
+  const L=(...p)=>{c.beginPath();c.moveTo(p[0],p[1]);for(let i=2;i<p.length;i+=2)c.lineTo(p[i],p[i+1]);c.stroke()},O=(a,b,r)=>{c.beginPath();c.arc(a,b,r,0,7);c.fill()};
+  ({hotel(){c.fillRect(6,26,11,58);c.fillRect(6,58,88,14);c.fillRect(83,58,11,26);O(32,44,11);c.beginPath();c.roundRect(48,40,46,18,7);c.fill()},
+    net(){c.beginPath();c.roundRect(10,16,80,54,6);c.stroke();c.fillRect(44,70,12,12);c.fillRect(26,82,48,9);c.fillRect(22,30,38,7);c.fillRect(22,45,24,7)},
+    bath(){c.beginPath();c.ellipse(50,70,40,18,0,-.35,Math.PI+.35);c.stroke();[30,50,70].forEach(a=>{c.beginPath();c.moveTo(a,66);c.bezierCurveTo(a-13,50,a+13,36,a,14);c.stroke()})},
+    kara(){O(64,28,20);c.lineWidth=15;L(50,46,24,86);c.lineWidth=5;L(50,20,78,38)},
+    fami(){L(30,12,30,88);L(18,12,18,36,42,36,42,12);c.beginPath();c.moveTo(64,10);c.quadraticCurveTo(88,30,80,56);c.lineTo(64,56);c.closePath();c.fill();L(68,56,68,88)},
+    conv(){c.fillRect(8,20,84,20);c.beginPath();c.rect(16,40,68,46);c.stroke();c.fillRect(56,56,17,30);c.fillRect(26,54,20,16)},
+    walk(){O(56,15,10);L(54,32,46,58);L(46,58,62,88);L(46,58,30,86);L(53,36,72,50);L(53,36,34,50)},
+    cold(){c.lineWidth=7;for(let i=0;i<3;i++){const a=i*Math.PI/3,dx=Math.cos(a)*40,dy=Math.sin(a)*40;L(50-dx,50-dy,50+dx,50+dy)}O(50,50,7)},
+    warm(){O(50,50,19);c.lineWidth=7;for(let i=0;i<8;i++){const a=i*Math.PI/4;L(50+Math.cos(a)*30,50+Math.sin(a)*30,50+Math.cos(a)*42,50+Math.sin(a)*42)}}})[name]();
+  c.restore()}
+
+// 都道府県の境界(国土地理院「地球地図日本」を簡略化)。関東と周辺のみ
+const PREF=/*__PREF__*/null;
+// 地図を枠内に描き、経度緯度→画面座標の関数を返す。hiは強調する都道府県コード、revは左からの表示幅
+const PNAME=["北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県", "茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県", "新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県", "静岡県", "愛知県", "三重県", "滋賀県", "京都府", "大阪府", "兵庫県", "奈良県", "和歌山県", "鳥取県", "島根県", "岡山県", "広島県", "山口県", "徳島県", "香川県", "愛媛県", "高知県", "福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"];
+// 地図の枠内で、各都道府県名を置く位置を一度だけ探す(県の内側で境界から最も遠い点)
+const LBL={};
+function mapLabels(key,B,lon0,lon1,latc,avoid){if(LBL[key])return LBL[key];const cs=Math.cos(latc*Math.PI/180),k=B.w/((lon1-lon0)*cs),dl=B.h/2/k,out=[];
+  const inside=(r,x,y)=>{let f=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[i],b=r[j];if((a[1]>y)!=(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])f=!f}return f};
+  for(const code in PREF){let best=null,bs=0;for(let gx=1;gx<28;gx++)for(let gy=1;gy<14;gy++){const x=lon0+(lon1-lon0)*gx/28,y=latc-dl+2*dl*gy/14,r=PREF[code].find(r=>inside(r,x,y));if(!r)continue;
+    let d=Math.min((x-lon0)*cs,(lon1-x)*cs,(y-latc+dl)*.7,(latc+dl-y)*.7);for(const p of r){const e=Math.hypot((p[0]-x)*cs,p[1]-y);if(e<d)d=e}for(const p of avoid||[]){const e=Math.hypot((p[2]-x)*cs,p[1]-y)*.6;if(e<d)d=e}if(d>bs){bs=d;best=[x,y]}}
+   if(best&&bs*k>34)out.push([code,best[0],best[1]])}
+  return LBL[key]=out}
+function drawLabels(key,B,P,lon0,lon1,latc,hi,size,avoid){mapLabels(key,B,lon0,lon1,latc,avoid).forEach(([code,x,y])=>{const[px,py]=P(x,y),on=code==hi;tx(PNAME[+code-1],px,py+size*.35,on?size*1.9:size,on?C.led:C.muted,"center",on?900:700)})}
+function geoMap(B,lon0,lon1,latc,hi,rev){const cs=Math.cos(latc*Math.PI/180),k=B.w/((lon1-lon0)*cs),P=(lon,lat)=>[B.x+(lon-lon0)*cs*k,B.y+B.h/2-(lat-latc)*k];
+  c.save();c.beginPath();c.rect(B.x,B.y,Math.min(rev,B.w),B.h);c.clip();c.fillStyle="#060912";c.fillRect(B.x,B.y,B.w,B.h);c.lineJoin="round";
+  for(const code in PREF){const on=code==hi;c.fillStyle=on?"#4a370f":"#151c33";c.strokeStyle=on?C.led:"#3a4673";c.lineWidth=on?5:2.5;
+   PREF[code].forEach(r=>{c.beginPath();r.forEach(([lo,la],i)=>{const[x,y]=P(lo,la);i?c.lineTo(x,y):c.moveTo(x,y)});c.closePath();c.fill();c.stroke()})}
+  if(hi)PREF[hi].forEach(r=>{c.strokeStyle=C.led;c.lineWidth=5;c.beginPath();r.forEach(([lo,la],i)=>{const[x,y]=P(lo,la);i?c.lineTo(x,y):c.moveTo(x,y)});c.closePath();c.stroke()});
+  (D.net||[]).forEach(([col,pts])=>{c.globalAlpha=.42;c.strokeStyle=col;c.lineWidth=k>900?3:2;c.beginPath();pts.forEach(([lo,la],i)=>{const[x,y]=P(lo,la);i?c.lineTo(x,y):c.moveTo(x,y)});c.stroke()});c.globalAlpha=1;
+  c.restore();c.strokeStyle=C.line;c.lineWidth=3;c.strokeRect(B.x,B.y,Math.min(rev,B.w),B.h);return P}
+
+// タクシーのピクトグラム(右向き、幅120)。spinで車輪が回る
+function cab(x,y,spin){c.save();c.translate(x,y);
+  c.fillStyle="#ffd23f";c.beginPath();c.moveTo(24,6);c.lineTo(84,6);c.lineTo(100,30);c.lineTo(14,30);c.closePath();c.fill();c.beginPath();c.roundRect(0,28,122,32,8);c.fill();
+  c.fillStyle="#ff7a1a";c.fillRect(46,-6,26,12);
+  c.fillStyle="#0b0e1c";c.beginPath();c.moveTo(30,12);c.lineTo(54,12);c.lineTo(54,28);c.lineTo(22,28);c.closePath();c.fill();c.beginPath();c.moveTo(60,12);c.lineTo(80,12);c.lineTo(91,28);c.lineTo(60,28);c.closePath();c.fill();
+  c.fillStyle="#fff6c9";c.fillRect(112,36,10,10);
+  [28,94].forEach(wx=>{c.fillStyle="#0b0e1c";c.beginPath();c.arc(wx,60,15,0,7);c.fill();c.strokeStyle="#8f97b8";c.lineWidth=4;c.beginPath();c.moveTo(wx-Math.cos(spin)*9,60-Math.sin(spin)*9);c.lineTo(wx+Math.cos(spin)*9,60+Math.sin(spin)*9);c.stroke()});
+  c.restore()}
+// 黒地図風の背景。実在の地図ではなく、環状線と放射路線をイメージした架空の路線網
+let MAP=null;
+function buildMap(){const m=document.createElement("canvas");m.width=W+400;m.height=H+300;const g=m.getContext("2d");let sd=20261005;const R=()=>{sd|=0;sd=sd+0x6D2B79F5|0;let t=Math.imul(sd^sd>>>15,1|sd);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+  g.fillStyle="#04060b";g.fillRect(0,0,m.width,m.height);g.lineCap="round";
+  const ang=[.18,.18+Math.PI/2,1.02,1.02+Math.PI/2];
+  for(let i=0;i<620;i++){const x=R()*m.width,y=R()*m.height,a=ang[i%4],l=40+R()*170;g.strokeStyle="#111829";g.lineWidth=2;g.beginPath();g.moveTo(x,y);g.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);g.stroke()}
+  for(let i=0;i<16;i++){const x=R()*m.width,y=R()*m.height,a=ang[i%4]+(R()-.5)*.1;g.strokeStyle="#1a2440";g.lineWidth=5;g.beginPath();g.moveTo(x-Math.cos(a)*1600,y-Math.sin(a)*1600);g.lineTo(x+Math.cos(a)*1600,y+Math.sin(a)*1600);g.stroke()}
+  g.strokeStyle="#0a1a36";g.lineWidth=54;g.beginPath();g.moveTo(-50,980);g.bezierCurveTo(600,820,900,1250,1500,1040);g.bezierCurveTo(1900,900,2100,1150,2400,1000);g.stroke();
+  const cx=m.width/2,cy=m.height/2;MAP={m,cx,cy,lines:[]};
+  for(let i=0;i<9;i++){let a=i*Math.PI*2/9+R()*.3,x=cx+Math.cos(a)*170,y=cy+Math.sin(a)*110;const pts=[[x,y]];for(let k=0;k<7;k++){a+=(R()-.5)*.5;x+=Math.cos(a)*190;y+=Math.sin(a)*190;pts.push([x,y])}MAP.lines.push(pts)}
+  g.strokeStyle="#5a3f10";g.lineWidth=6;g.lineJoin="round";MAP.lines.forEach(p=>{g.beginPath();p.forEach(([x,y],k)=>k?g.lineTo(x,y):g.moveTo(x,y));g.stroke()});
+  g.beginPath();g.ellipse(cx,cy,170,110,0,0,7);g.stroke();
+  MAP.lines.forEach(p=>p.forEach(([x,y])=>{g.fillStyle="#04060b";g.strokeStyle="#a8761c";g.lineWidth=3;g.beginPath();g.arc(x,y,8,0,7);g.fill();g.stroke()}))}
+function mapBg(){if(!MAP)buildMap();const ox=-200+70*Math.sin(T*.11),oy=-150+45*Math.cos(T*.09);c.drawImage(MAP.m,ox,oy);
+  c.save();c.shadowColor=C.led;c.shadowBlur=28;c.fillStyle="#ffd98a";MAP.lines.forEach((p,i)=>{const u=((T*.22+i*.37)%1)*(p.length-1),k=Math.floor(u),f=u-k,q=p[k],r=p[Math.min(k+1,p.length-1)];c.beginPath();c.arc(ox+q[0]+(r[0]-q[0])*f,oy+q[1]+(r[1]-q[1])*f,9,0,7);c.fill()});c.restore();
+  const g=c.createRadialGradient(960,440,120,960,440,1100);g.addColorStop(0,"rgba(4,6,11,.72)");g.addColorStop(.55,"rgba(4,6,11,.35)");g.addColorStop(1,"rgba(4,6,11,.8)");c.fillStyle=g;c.fillRect(0,0,W,884)}
+
+const draw={
+ hook(){
+  // 車内: 寝ている乗客を車掌が起こす(ピクトグラム風)
+  const t0=S.ss[0],ln=(x1,y1,x2,y2,w,col)=>{c.strokeStyle=col;c.lineWidth=w;c.lineCap="round";c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke()},
+   dot=(x,y,r,col)=>{c.fillStyle=col;c.beginPath();c.arc(x,y,r,0,7);c.fill()};
+  c.fillStyle="#1b2240";c.fillRect(0,0,W,884);c.fillStyle="#232b4d";c.fillRect(0,130,W,14);
+  for(let i=0;i<4;i++){rr(120+i*440,180,360,270,16,"#0b0e1c","#3a4470")}
+  for(let i=0;i<9;i++){const x=200+i*190;ln(x,144,x,196,6,"#59638f");c.strokeStyle="#59638f";c.lineWidth=7;c.beginPath();c.arc(x,218,22,0,7);c.stroke()}
+  rr(720,36,480,76,6,"#05060c","#3a4470");tx("終点　"+D.station,960,92,48,C.led,"center",400,LED);
+  rr(260,500,1400,150,18,"#2b6b5a");rr(240,640,1440,64,14,"#235546");c.fillStyle="#141a30";c.fillRect(0,760,W,124);c.fillStyle="#3a4470";c.fillRect(300,704,24,56);c.fillRect(1596,704,24,56);
+  const wake=ez((lt-t0-.9)/.35),bob=Math.sin(lt*2.2)*.02,th=(-.32+bob)*(1-wake)-Math.sin(wake*Math.PI)*.08;
+  // 乗客
+  ln(700,652,850,652,58,C.fg);ln(850,652,850,748,50,C.fg);
+  c.save();c.translate(700,650);c.rotate(th);ln(0,-10,0,-150,74,C.fg);dot(0,-232,46,C.fg);ln(8,-140,90,-30,30,"#c9cde0");c.restore();
+  if(wake<1)[0,1,2].forEach(i=>{const p=((lt*.45+i/3)%1);tx("Z",560-p*90+i*6,400-p*150,40+p*46,C.cool,"center",400,LED,(1-wake)*Math.sin(p*Math.PI))});
+  if(wake>0)tx("!",700,340,120,C.hot,"center",900,F,wake);
+  // 車掌
+  const wp=cl((lt-.5)/2.9),we=wp<.5?2*wp*wp:1-2*(1-wp)*(1-wp),cx=2060-(2060-960)*we,sw=wp<1?Math.sin(lt*9)*46:0,K="#5ec8ff";
+  ln(cx,610,cx-22-sw,752,38,K);ln(cx,610,cx+22+sw,752,38,K);ln(cx,430,cx,600,80,K);dot(cx,352,46,K);
+  rr(cx-54,292,108,34,8,K);c.fillStyle=K;c.fillRect(cx-78,318,60,12);c.fillStyle="#0b0e1c";c.fillRect(cx-54,312,108,6);
+  const reach=ez((lt-t0+.35)/.3),tap=lt>t0&&lt<t0+1?Math.sin((lt-t0)*16)*14:0;
+  ln(cx-14,450,cx-14-(150+tap)*reach-20*(1-reach),450+(60-tap*.4)*reach+130*(1-reach),30,"#3d9fd1");
+  const ba=A(0,0,.25);if(ba>0){rr(1010,150,560,130,22,"#f4f5f7",null,ba);c.globalAlpha=ba;c.fillStyle="#f4f5f7";c.beginPath();c.moveTo(1060,270);c.lineTo(1010,330);c.lineTo(1120,270);c.fill();c.globalAlpha=1;tx("終点ですよ",1290,238,72,"#12141c","center",900,F,ba)}
+  // 駅名標へ切り替え → 地図にピン
+  const a1=A(1,.3,1),a2=A(1,1.9,.8);
+  if(a1>0){c.fillStyle=`rgba(11,14,28,${a1})`;c.fillRect(0,0,W,884);
+   if(a2<1){c.globalAlpha=a1*(1-a2);c.fillStyle="#141a30";c.fillRect(0,760,W,124);c.fillStyle="#e8d44d";c.fillRect(0,760,W,10);c.globalAlpha=1}
+   if(a2>0){const B={x:70,y:110,w:1020,h:690},M=D.mapHook,P=geoMap(B,M.lon0,M.lon1,M.latc,D.prefCode,B.w*a2);
+    if(a2>=1){c.save();c.beginPath();c.rect(B.x,B.y,B.w,B.h);c.clip();
+     drawLabels("hook",B,P,M.lon0,M.lon1,M.latc,D.prefCode,28);
+     const o=D.route[0],[ox,oy]=P(o[2],o[1]);c.fillStyle=C.fg;c.beginPath();c.arc(ox,oy,9,0,7);c.fill();tx(o[0],ox+16,oy+10,30,C.fg,"left",700);
+     const e=D.route[D.route.length-1],[px,py]=P(e[2],e[1]),d=cl((lt-S.ss[1]-2.8)/.55),b=d<1?1-Math.pow(1-d,2):1,dy=-420*(1-b)-(d>=1?Math.max(0,Math.sin((lt-S.ss[1]-3.35)*9))*26*Math.exp(-(lt-S.ss[1]-3.35)*4):0);
+     if(d>0){if(d>=1){const rp=((lt-S.ss[1]-3.35)*.8)%1;c.strokeStyle=C.hot;c.globalAlpha=1-rp;c.lineWidth=5;c.beginPath();c.ellipse(px,py,20+rp*70,(20+rp*70)*.45,0,0,7);c.stroke();c.globalAlpha=1}
+      c.fillStyle=C.hot;c.beginPath();c.moveTo(px,py+dy);c.bezierCurveTo(px-58,py+dy-70,px-46,py+dy-132,px,py+dy-132);c.bezierCurveTo(px+46,py+dy-132,px+58,py+dy-70,px,py+dy);c.fill();c.fillStyle="#fff";c.beginPath();c.arc(px,py+dy-88,17,0,7);c.fill();
+      if(d>=1){c.font=`900 52px ${F}`;const lw=c.measureText(D.station).width+60;rr(px+56,py-128,lw,74,8,"#f4f5f7");tx(D.station,px+56+lw/2,py-72,52,"#12141c","center",900)}}
+     c.restore()}}
+   const sc=1-.42*a2,sx=960+520*a2,sy=435+30*(1-a1)-15*a2;c.save();c.translate(sx,sy);c.scale(sc,sc);
+   rr(-550,-215,1100,430,14,"#f4f5f7",null,a1);c.globalAlpha=a1;c.fillStyle="#2f8f4e";c.fillRect(-550,115,1100,34);c.globalAlpha=1;
+   tx(D.station,0,-15,Math.min(190,960/D.station.length),"#12141c","center",900,F,a1);tx(D.kana,0,75,60,"#12141c","center",700,F,a1);tx(D.city,0,193,36,"#3b4258","center",700,F,a1);c.restore()}
+ },
+ rule(){
+  brand();tx("採点基準",80,190,68,C.fg,"left",900);tx("1〜5点 × 重み = 100点満点。点が高いほど詰み",420,186,34,C.muted,"left",500,F,A(1));
+  {let lx=1860;for(let i=3;i>=0;i--){c.font=`700 26px ${F}`;lx-=c.measureText(CATN[i]).width;tx(CATN[i],lx,78,26,CATC[i],"left",700);c.fillStyle=CATC[i];c.beginPath();c.arc(lx-18,69,9,0,7);c.fill();lx-=58}}
+  const cx=[80,520,650,890,1130,1370,1610],cw=[430,120,230,230,230,230,230],y0=250,rh=80,when=[2,3,4,4,4,5];RULES[1][0]=D.taxiTo+"駅までのタクシー代";
+  ["項目","重み","1点","2点","3点","4点","5点"].forEach((h,j)=>{rr(cx[j],y0,cw[j],64,4,j==6?C.hot:j>1?C.panel:"#1f2748");tx(h,cx[j]+cw[j]/2,y0+44,32,j==6?C.bg:C.fg,"center",900)});
+  RULES.forEach((r,i)=>{const a=A(when[i]),y=y0+74+i*rh,cur=lt>=S.ss[when[i]]&&lt<(i==5?S.ss[last()]:S.ss[when[i]+1]);
+   rr(cx[0],y,1760,rh-8,4,cur?"#232c52":C.panel,cur?C.led:null,.35+.65*a);
+   c.globalAlpha=.35+.65*a;c.fillStyle=CATC[CAT[i]];c.beginPath();c.arc(cx[0]+30,y+36,11,0,7);c.fill();c.globalAlpha=1;{let fs=34;c.font=`700 ${fs}px ${F}`;while(c.measureText(r[0]).width>cw[0]-70&&fs>20){fs-=1;c.font=`700 ${fs}px ${F}`}tx(r[0],cx[0]+56,y+48,fs,C.fg,"left",700,F,.35+.65*a)}
+   const wa=A(last());tx("×"+r[1],cx[1]+cw[1]/2,y+50,wa>0?42:36,wa>0?C.led:C.muted,"center",900,F,.35+.65*a);
+   for(let j=2;j<7;j++)tx(r[j],cx[j]+cw[j]/2,y+48,32,j==6?C.hot:j==2?C.cool:C.fg,"center",700,F,a)});
+  {const a=A(5);tx("※ 気温を冬(1月)で採点する理由：冬の夜に屋外で朝を待つのは命に関わるため。8月の気温は参考値として掲載",80,852,27,CATC[3],"left",700,F,a)}
+ },
+ hello(){mapBg();tx(D.channel,960,430,170,C.fg,"center",900,F,A(0));c.globalAlpha=A(1);c.fillStyle=C.led;c.fillRect(660,480,600*A(1,0,1),8);c.globalAlpha=1;
+  tx(D.tagline,960,600,72,C.led,"center",700,F,A(1,.2))},
+ intro(){
+  brand();tx(D.line,80,190,68,C.fg,"left",900);
+  const B={x:80,y:210,w:1120,h:262},MI=D.mapIntro,P=geoMap(B,MI.lon0,MI.lon1,MI.latc,null,B.w),pts=D.path.map(r=>P(r[1],r[0])),cum=[0];
+  for(let i=1;i<pts.length;i++)cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));
+  const p=cl((lt-S.ss[0])/(S.ss[2]-S.ss[0]-.6)),e=p<.5?2*p*p:1-2*(1-p)*(1-p),dist=cum[cum.length-1]*e;
+  const path=(to,col,w)=>{c.strokeStyle=col;c.lineWidth=w;c.lineCap=c.lineJoin="round";c.beginPath();c.moveTo(...pts[0]);let pos=pts[0];
+   for(let i=1;i<pts.length;i++){if(cum[i]<=to){c.lineTo(...pts[i]);pos=pts[i]}else{const f=(to-cum[i-1])/(cum[i]-cum[i-1]);pos=[pts[i-1][0]+(pts[i][0]-pts[i-1][0])*f,pts[i-1][1]+(pts[i][1]-pts[i-1][1])*f];c.lineTo(...pos);break}}c.stroke();return pos};
+  c.save();c.beginPath();c.rect(B.x,B.y,B.w,B.h);c.clip();
+  drawLabels("intro",B,P,MI.lon0,MI.lon1,MI.latc,null,24,D.route);
+  path(1e9,"#6b3a22",8);const pos=path(dist,"#f15a22",10);let lab=0;
+  D.route.forEach((r,i)=>{const[x,y]=P(r[2],r[1]);if(!r[3]){c.fillStyle="#f4a27c";c.beginPath();c.arc(x,y,4,0,7);c.fill();return}
+   c.beginPath();c.arc(x,y,11,0,7);c.fillStyle=C.bg;c.fill();c.strokeStyle=C.fg;c.lineWidth=4;c.stroke();const up=lab++%2==0;c.lineWidth=7;c.strokeStyle=C.bg;c.font=`700 28px ${F}`;c.textAlign="center";c.strokeText(r[0],x,y+(up?-22:44));tx(r[0],x,y+(up?-22:44),28,i==D.route.length-1?C.led:C.fg,"center")});
+  rr(pos[0]-40,pos[1]-19,80,38,9,C.led);tx("終電",pos[0],pos[1]+9,23,C.bg,"center",900);c.restore();
+  tx(Math.round(D.km*e)+"km",1200,190,60,C.led,"right",900,F,A(0));
+  const q=["いつ帰れるのか","いくらで帰れるのか","朝まで過ごせる場所はあるのか","外で待てるのか"];
+  tx("見るのは4つ",80,532,40,C.muted,"left",700,F,A(3));
+  q.forEach((s,i)=>{const a=A(4+i),x=80+(i%2)*570,yy=556+Math.floor(i/2)*124;const b=A(9+i),tags=["① 待ち時間","② タクシー","③ 宿　④ 暇つぶし　⑤ コンビニ","⑥ 気温"];rr(x,yy+20*(1-a),540,104,6,C.panel,b>0?CATC[i]:C.line,a);c.globalAlpha=a;c.fillStyle=CATC[i];c.beginPath();c.arc(x+34,yy+38-10*b+20*(1-a)+10,11,0,7);c.fill();c.globalAlpha=1;tx(s,x+58,yy+66-18*b+20*(1-a),s.length>10?30:36,C.fg,"left",700,F,a);tx(tags[i],x+58,yy+88,26,CATC[i],"left",900,F,b)});
+  radar([0,0,0,0,0,0],1560,500,230,CAT.map(k=>lt>=S.ss[Math.min(9+k,S.ss.length-1)]&&S.ss.length>9?CATC[k]:null));
+ },
+ wait(){
+  brand();header();src("time");const x0=120,x1=1180,y=470,H0=Math.floor(D.dep)-.5,H1=Math.ceil(D.first)+.5,X=h=>x0+(x1-x0)*(h-H0)/(H1-H0);
+  c.strokeStyle=C.line;c.lineWidth=6;c.beginPath();c.moveTo(x0,y);c.lineTo(x1,y);c.stroke();
+  for(let h=Math.ceil(H0);h<=Math.floor(H1);h++){c.fillStyle=C.muted;c.fillRect(X(h)-2,y-12,4,24);tx((h%24)+"時",X(h),y+58,26,C.muted,"center",500)}
+  const f=A(5,0,1.6);if(f>0){c.fillStyle="rgba(255,93,125,.35)";c.fillRect(X(D.arr),y-26,(X(D.first)-X(D.arr))*f,52);
+   tx(D.waitL,(X(D.arr)+X(D.first))/2,y+190,D.waitL.length>5?84:110,C.hot,"center",900,F,f);tx("始発までの待ち時間",(X(D.arr)+X(D.first))/2,y+240,30,C.muted,"center",500,F,f)}
+  [[D.dep,D.origin+"発",D.depL,2,"right",-14],[D.arr,D.station+"着",D.arrL,3,"left",14],[D.first,"上り始発",D.firstL,4,"right",-14]].forEach(([h,n,l,k,al,dx])=>{const a=A(k);if(a<=0)return;
+   const x=X(h);c.globalAlpha=a;c.beginPath();c.arc(x,y,15,0,7);c.fillStyle=C.led;c.fill();c.fillRect(x-2,y-130,4,130);c.globalAlpha=1;
+   tx(l,x+dx,y-70,50,C.led,al,900,F,a);tx(n,x+dx,y-128,28,C.fg,al,700,F,a)});
+  stamp(D.scores[0]);radar(radarNow());
+ },
+ taxi(){
+  brand();header();src("taxi");const max=Math.max(...D.taxi.map(r=>r[2])),BW=500;
+  D.taxi.forEach(([n,km,yen],i)=>{const hot=yen>=10000,a=A(3+i,0,hot?2.6:1.1),y=320+i*130;tx(n,80,y+52,50,C.fg,"left",900);tx(km,300,y+52,30,C.muted,"left",500);
+   if(a<=0)return;const now=yen*a,w=Math.max(BW*yen/max*a,6),moving=a<1,sweat=now>=10000;
+   const jx=moving&&sweat?Math.sin(lt*38)*3:0,X=430+w+14+jx,Y=y+2+(moving?Math.sin(lt*22)*1.5:0);
+   rr(430,y+6,w,64,4,hot?C.hot:C.led);c.strokeStyle=C.muted;c.lineWidth=4;c.beginPath();c.moveTo(430+w,y+46);c.lineTo(X+4,y+46);c.stroke();
+   cab(X,Y,moving?lt*14:0);
+   if(sweat)for(let k=0;k<3;k++){const p=(lt*(moving?1.7:.8)+k/3)%1,dx=X+34-p*70-k*10,dy=Y-4-70*p+110*p*p;c.globalAlpha=1-p;c.fillStyle=C.cool;c.beginPath();c.moveTo(dx,dy-24);c.quadraticCurveTo(dx+17,dy,dx,dy+12);c.quadraticCurveTo(dx-17,dy,dx,dy-24);c.fill();c.globalAlpha=1}
+   const v=Math.round(now/100)*100;if(v>0)tx("約"+v.toLocaleString("ja-JP")+"円",hot?1200:X+140,hot?y+124:y+52,hot?52:44,hot?C.hot:C.fg,hot?"right":"left",900)});
+  tx("深夜料金の目安",80,290,28,C.muted,"left",500,F,A(2));
+  stamp(D.scores[1]);radar(radarNow());
+ },
+ cnt(){
+  brand();header();src("shop");const n=S.items.length,w=1120/n;
+  S.items.forEach(([label,v,u,k,d,col,shop,more],i)=>{d=d||0;const a=A(k,d,.9),x=80+i*w,ic=ICON[label],cw=w-24;rr(x,300,cw,350,6,C.panel,C.line);
+   if(ic)ico(ic,x+26,320,88,col||C.fg);
+   let fs=34;const lx=ic?x+132:x+28,room=x+cw-20-lx;c.font=`700 ${fs}px ${F}`;while(c.measureText(label).width>room&&fs>18){fs-=2;c.font=`700 ${fs}px ${F}`}
+   tx(label,lx,376,fs,C.muted,"left",700);
+   if(a<=0)return;const none=v===0&&(u=="軒"||u=="店");
+   if(none)tx("なし",x+28,548,112,C.muted,"left",900,F,a);else{const num=String(Math.round(v*a));tx(num,x+28,560,150,col||C.led,"left",900,F,a);
+   c.font=`900 150px ${F}`;tx(u+(more?"以上":""),x+40+c.measureText(num).width,560,more?40:50,C.fg,"left",700,F,a)}
+   if(shop&&!none){const t=shop+(v>=2||more?" など":"");let f2=26;c.font=`700 ${f2}px ${F}`;while(c.measureText(t).width>cw-48&&f2>15){f2-=1;c.font=`700 ${f2}px ${F}`}tx(t,x+28,638,f2,C.fg,"left",700,F,a)}
+   if(ic&&!S.nodots&&u!="分")for(let j=0;j<Math.min(10,Math.round(v*a));j++)ico(ic,x+28+j*30,584,24,C.led)});
+  if(S.note){const a=A(1);c.font=`700 28px ${F}`;rr(80,672,c.measureText(S.note).width+44,58,6,null,C.led,a);tx(S.note,102,712,28,C.led,"left",700,F,a)}
+  stamp(D.scores[SC.indexOf(S)-BASE]);radar(radarNow());
+ },
+ temp(){
+  brand();header();src("temp");const X=230,yT=300,yB=720,Y=v=>yB-(v+10)/40*(yB-yT),d=A(3,0,2.6),cur=22+(D.win-22)*d,
+   mix=t=>{const a=[255,157,92],b=[94,200,255];return`rgb(${a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(",")})`},col=mix(cl((22-cur)/20));
+  // 温度計
+  rr(X-28,yT-34,56,yB-yT+70,28,"#0b0e1c",C.muted);c.fillStyle="#0b0e1c";c.strokeStyle=C.muted;c.lineWidth=3;c.beginPath();c.arc(X,yB+62,52,0,7);c.fill();c.stroke();
+  c.fillStyle=col;c.beginPath();c.arc(X,yB+62,38,0,7);c.fill();c.fillRect(X-12,Y(cur),24,yB+40-Y(cur));c.beginPath();c.arc(X,Y(cur),12,0,7);c.fill();
+  for(let v=-10;v<=30;v+=5){const big=v%10==0;c.fillStyle=v==0?C.fg:C.muted;c.fillRect(X-28-(big?26:14),Y(v)-2,big?20:10,4);if(big)tx(v+"℃",X-62,Y(v)+10,28,v==0?C.fg:C.muted,"right",700)}
+  const mark=(v,label,colr,a,dy)=>{if(a<=0)return;const y=Y(v);c.globalAlpha=a;c.fillStyle=colr;c.beginPath();c.moveTo(X+34,y);c.lineTo(X+58,y-14);c.lineTo(X+58,y+14);c.fill();c.globalAlpha=1;tx(label,X+66,y+11+dy,30,colr,"left",900,F,a)};
+  mark(D.win,"1月",C.cool,cl((d-.9)*10),Math.abs(Y(D.win)-Y(D.sum))<40?22:0);mark(D.sum,"8月","#ff9d5c",A(S.cue.sum),Math.abs(Y(D.win)-Y(D.sum))<40?-22:0);
+  // 1月(スコア対象)
+  rr(420,290,420,360,6,C.panel,A(1)>0?C.cool:C.line);ico("cold",444,312,80,C.cool);tx("1月の平均最低気温",538,364,28,C.muted,"left",700);
+  rr(444,410,196,48,6,C.cool,null,A(1));tx("スコア対象",542,444,28,C.bg,"center",900,F,A(1));
+  if(lt>=S.ss[3]){const n=String(Math.round(cur));tx(n,444,600,160,col,"left",900);c.font=`900 160px ${F}`;tx("℃",458+c.measureText(n).width,600,54,C.fg,"left",700)}
+  tx("命に関わる真冬で採点",444,636,26,C.muted,"left",500,F,A(1));
+  // 8月(参考値)
+  rr(864,290,336,360,6,C.panel,C.line);ico("warm",884,314,64,"#ff9d5c");tx("8月の平均最低気温",958,358,24,C.muted,"left",700);
+  rr(884,410,136,48,6,null,"#ff9d5c",A(2));tx("参考値",952,444,28,"#ff9d5c","center",900,F,A(2));
+  const b=A(S.cue.sum,0,.9);if(b>0){const n=String(Math.round(D.sum*b));tx(n,884,600,120,"#ff9d5c","left",900,F,b);c.font=`900 120px ${F}`;tx("℃",896+c.measureText(n).width,600,44,C.fg,"left",700,F,b)}
+  tx("スコアには含めません",884,636,24,C.muted,"left",500,F,A(2));
+  stamp(D.scores[5]);radar(radarNow());
+ },
+ result(){
+  brand();tx(D.station+"駅の詰み度",80,230,64,C.fg,"left",900,F,A(0));
+  const d=(S.ss[2]-S.ss[1])*.55,a=A(1,d,1.4);
+  if(a>0){const num=String(Math.round(D.total*a));tx(num,80,520,300,C.led,"left",900,F,a);c.font=`900 300px ${F}`;tx("点 / 100",110+c.measureText(num).width,520,64,C.muted,"left",700,F,a)}
+  else tx("……",80,520,200,C.muted,"left",900,F,A(1));
+  const v=A(2,.8,.5);if(v>0){c.save();c.translate(360,690);c.rotate(-.05);c.scale(1.5-.5*v,1.5-.5*v);rr(-290,-74,580,148,8,null,C.hot,v);tx(D.verdict,0,D.verdict.length>5?28:34,Math.min(96,510/D.verdict.length),C.hot,"center",900,F,v);c.restore()}
+  tx("判定",80,592,34,C.muted,"left",700,F,A(2));
+  radar(D.scores);
+ },
+ outro(){
+  mapBg();brand();tx("あなたの路線の終点は、何点?",960,330,96,C.fg,"center",900,F,A(1));
+  tx("採点してほしい駅はコメントへ",960,440,52,C.muted,"center",700,F,A(2));
+  ["高評価","チャンネル登録"].forEach((s,i)=>{const a=A(3,i*.5),x=520+i*460;rr(x,540+20*(1-a),420,120,8,i?C.hot:C.led,null,a);tx(s,x+210,618+20*(1-a),54,C.bg,"center",900,F,a)});
+  tx("寝過ごしにはお気をつけて",960,790,60,C.led,"center",400,LED,A(4));
+  tx("採点基準は固定コメントに掲載",960,190,36,C.muted,"center",500,F,A(0));
+ }};
+
+let T=0,playing=false,speed=1,prev=0;
+function render(){
+  S=SC[SC.length-1];for(const s of SC)if(T<s.start+s.dur){S=s;break}
+  lt=Math.min(T-S.start,S.dur);stars();draw[S.k]();subtitle();
+  const fa=Math.min(cl(lt/.35),cl((S.dur-lt)/.35));if(fa<1&&T>0&&T<TOTAL){c.fillStyle=`rgba(8,10,20,${1-fa})`;c.fillRect(0,0,W,884)}
+  c.fillStyle=C.led;c.fillRect(0,1074,W*T/TOTAL,6);
+  const f=s=>Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
+  document.getElementById("time").textContent=f(T)+" / "+f(TOTAL);document.getElementById("seek").value=Math.round(T/TOTAL*1000);
+}
+function loop(ts){if(!playing)return;T+=Math.min(.1,(ts-prev)/1000)*speed;prev=ts;if(T>=TOTAL){T=TOTAL;setPlay(false)}render();if(playing)requestAnimationFrame(loop)}
+function setPlay(p){playing=p;document.getElementById("play").textContent=p?"一時停止":(T>=TOTAL?"最初から":"再生");if(p){prev=performance.now();requestAnimationFrame(loop)}}
+document.getElementById("play").addEventListener("click",()=>{if(!playing&&T>=TOTAL)T=0;setPlay(!playing)});
+document.getElementById("seek").addEventListener("input",e=>{T=e.target.value/1000*TOTAL;render();if(!playing)setPlay(false)});
+document.getElementById("speed").addEventListener("change",e=>speed=+e.target.value);
+document.getElementById("full").addEventListener("click",()=>{const s=document.getElementById("stage");try{(document.fullscreenElement?document.exitFullscreen():s.requestFullscreen()).catch(()=>{})}catch(e){}});
+document.addEventListener("keydown",e=>{if(e.code=="Space"&&!/BUTTON|SELECT|INPUT/.test(e.target.tagName)){e.preventDefault();document.getElementById("play").click()}});
+render();
+if(document.fonts&&document.fonts.load)Promise.all([document.fonts.load('900 60px "Zen Kaku Gothic New"',"大月"),document.fonts.load('700 60px "Zen Kaku Gothic New"',"大月"),document.fonts.load('500 60px "Zen Kaku Gothic New"',"大月"),document.fonts.load('60px "DotGothic16"',"終点")]).then(render,render);
+</script>
