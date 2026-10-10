@@ -1,0 +1,75 @@
+{
+  "station": "平塚",
+  "hook_style": "yopparai",
+  "sign_color": "#2f8f4e",
+  "kana": "ひらつか",
+  "pref": "神奈川県",
+  "pref_code": "14",
+  "city": "神奈川県平塚市",
+  "line": "東海道線",
+  "origin": "東京",
+  "km": 64,
+  "dep": "23:54",
+  "arr": "00:58",
+  "first": "04:51",
+  "taxi": [
+    {
+      "name": "藤沢",
+      "km": 16,
+      "yen": 9300
+    },
+    {
+      "name": "横浜",
+      "km": 37,
+      "yen": 21000
+    },
+    {
+      "name": "川崎",
+      "km": 56,
+      "yen": 34000
+    }
+  ],
+  "taxi_to": {
+    "name": "東京",
+    "km": 66,
+    "yen": 40000
+  },
+  "taxi_comment": "寝過ごしの代償としては重すぎる金額で、財布での脱出は厳しそうです。",
+  "hotel": 7,
+  "hotel_name": "ホテルルートイン平塚駅北口",
+  "netcafe": 4,
+  "netcafe_name": "自遊空間平塚駅前店",
+  "bath": 0,
+  "bath_name": "",
+  "karaoke": 3,
+  "karaoke_name": "からおけまねきねこ平塚西口店",
+  "famires": 0,
+  "famires_name": "",
+  "conveni": 10,
+  "conveni_name": "ローソン 平塚駅南口店",
+  "conveni_walk_min": 1,
+  "temp_jan": 1.5,
+  "temp_aug": 24.3,
+  "temp_station": "辻堂",
+  "town_feature": "山に囲まれた街",
+  "winter_comment": "海沿いの強風が身に染みるでしょう。",
+  "summer_comment": "と、ムシムシした夜を過ごすことになりそうです。",
+  "review": "距離こそ遠いですが、退避施設が充実しており、さまざまな時間の過ごし方ができるでしょう。",
+  "sources": {
+    "timetable": "JRアプリ",
+    "taxi": "ナビタイム",
+    "shop": "Googleマップ",
+    "temp": "気象庁"
+  },
+  "route": {
+    "region": "kanto",
+    "segments": [
+      {
+        "line": "上野東京ライン",
+        "from": "東京",
+        "to": "平塚"
+      }
+    ],
+    "extra": []
+  }
+}

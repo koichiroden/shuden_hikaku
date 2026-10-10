@@ -1,0 +1,70 @@
+{
+  "station": "飯能駅",
+  "hook_style": "yokone",
+  "sign_color": "#0c08fd",
+  "kana": "はんのう",
+  "pref": "埼玉県",
+  "pref_code": "11",
+  "city": "埼玉県飯能市",
+  "line": "池袋線",
+  "origin": "池袋",
+  "km": 44,
+  "dep": "23:40",
+  "arr": "00:35",
+  "first": "05:03",
+  "taxi": [
+    {
+      "name": "所沢",
+      "km": 19,
+      "yen": 10500
+    },
+    {
+      "name": "東久留米",
+      "km": 27,
+      "yen": 15000
+    }
+  ],
+  "taxi_to": {
+    "name": "池袋",
+    "km": 68,
+    "yen": 43000
+  },
+  "taxi_comment": "寝過ごしの代償としては重すぎる金額で、財布での脱出は厳しそうです。",
+  "hotel": 4,
+  "hotel_name": "ホテル・ヘリテイジ飯能",
+  "netcafe": 0,
+  "netcafe_name": "",
+  "bath": 0,
+  "bath_name": "",
+  "karaoke": 2,
+  "karaoke_name": "カラオケ館飯能店",
+  "famires": 0,
+  "famires_name": "",
+  "conveni": 10,
+  "conveni_name": "ファミリーマート飯能駅前店",
+  "conveni_walk_min": 1,
+  "temp_jan": -4,
+  "temp_aug": 22.1,
+  "temp_station": "鳩山",
+  "town_feature": "山際の町",
+  "winter_comment": "吹きおろしの強風が身に染みるでしょう。",
+  "summer_comment": "と、都心より涼しい夜を過ごせそうです。",
+  "review": "距離の遠さと待ち時間の長さで高めの判定になりました。",
+  "sources": {
+    "timetable": "JRアプリ",
+    "taxi": "ナビタイム",
+    "shop": "Googleマップ",
+    "temp": "気象庁"
+  },
+  "route": {
+    "region": "kanto",
+    "segments": [
+      {
+        "line": "西武池袋線",
+        "from": "池袋",
+        "to": "飯能"
+      }
+    ],
+    "extra": []
+  }
+}
