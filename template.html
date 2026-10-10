@@ -38,7 +38,7 @@ p{margin:0;font-size:13px;color:var(--muted);line-height:1.7}
 const D=/*__D__*/null;
 const AX=["待ち時間","タクシー","宿","暇つぶし","コンビニ","気温"],WT=[5,4,4,2,2,3];
 const SC=/*__SC__*/null;
-const BASE=SC.findIndex(s=>s.k=="wait"),RULES=[["始発までの待ち時間",5,"4時間未満","4:00〜4:20","4:20〜4:40","4:40〜5:00","5時間以上"],["タクシー帰還コスト",4,"5千円未満","5千〜1万円","1〜2万円","2〜3万円","3万円以上"],["泊まれる場所",4,"4軒以上","3軒","2軒","1軒","0軒"],["時間を潰せる場所",2,"4軒以上","3軒","2軒","1軒","0軒"],["24時間コンビニ",2,"4店以上","3店","2店","1店","0店"],["冬の最低気温",3,"2℃以上","0〜2℃","-2〜0℃","-4〜-2℃","-4℃未満"]];
+const BASE=SC.findIndex(s=>s.k=="wait"),RULES=[["始発までの待ち時間",5,"3時間30分未満","3:30〜3:45","3:45〜4:00","4:00〜4:15","4時間15分以上"],["タクシー帰還コスト",4,"5千円未満","5千〜1万円","1〜2万円","2〜3万円","3万円以上"],["泊まれる場所",4,"4軒以上","3軒","2軒","1軒","0軒"],["時間を潰せる場所",2,"4軒以上","3軒","2軒","1軒","0軒"],["24時間コンビニ",2,"4店以上","3店","2店","1店","0店"],["冬の最低気温",3,"3℃以上","2〜3℃","1〜2℃","0〜1℃","0℃未満"]];
 let TOTAL=0;
 SC.forEach(s=>{s.se=s.t.split(/(?<=。)/);s.ss=[];let a=0.4+(s.pre||0);s.se.forEach((x,i)=>{s.ss.push(a);a+=(s.d?s.d[i]:x.length/D.cps)+0.3+(i==0&&s.gap||0)});s.dur=a+0.5+(s.end||0);s.start=TOTAL;TOTAL+=s.dur});
 
@@ -118,6 +118,11 @@ function geoMap(B,lon0,lon1,latc,hi,rev){const cs=Math.cos(latc*Math.PI/180),k=B
   (D.net||[]).forEach(([col,pts])=>{c.globalAlpha=.42;c.strokeStyle=col;c.lineWidth=k>900?3:2;c.beginPath();pts.forEach(([lo,la],i)=>{const[x,y]=P(lo,la);i?c.lineTo(x,y):c.moveTo(x,y)});c.stroke()});c.globalAlpha=1;
   c.restore();c.strokeStyle=C.line;c.lineWidth=3;c.strokeRect(B.x,B.y,Math.min(rev,B.w),B.h);return P}
 
+// 羽の生えたお札。flap(-1〜1)で羽ばたく
+function bill(x,y,sc,flap,al){if(al<=0)return;c.save();c.globalAlpha=al;c.translate(x,y);c.scale(sc,sc);c.rotate(flap*.08);
+  [-1,1].forEach(d=>{c.save();c.translate(d*26,-8);c.rotate(d*(-.55+flap*.55));c.fillStyle="#f4f5f7";c.beginPath();c.ellipse(d*20,-6,24,11,0,0,7);c.fill();c.beginPath();c.ellipse(d*14,4,17,8,0,0,7);c.fill();c.restore()});
+  c.fillStyle="#3fae6a";c.strokeStyle="#1f7a45";c.lineWidth=3;c.beginPath();c.roundRect(-32,-18,64,36,4);c.fill();c.stroke();
+  c.fillStyle="#d8f5e1";c.beginPath();c.arc(0,0,11,0,7);c.fill();c.fillStyle="#1f7a45";c.font=`900 17px ${F}`;c.textAlign="center";c.textBaseline="middle";c.fillText("¥",0,1);c.textBaseline="alphabetic";c.restore()}
 // タクシーのピクトグラム(右向き、幅120)。spinで車輪が回る
 function cab(x,y,spin){c.save();c.translate(x,y);
   c.fillStyle="#ffd23f";c.beginPath();c.moveTo(24,6);c.lineTo(84,6);c.lineTo(100,30);c.lineTo(14,30);c.closePath();c.fill();c.beginPath();c.roundRect(0,28,122,32,8);c.fill();
@@ -153,18 +158,61 @@ const draw={
   for(let i=0;i<9;i++){const x=200+i*190;ln(x,144,x,196,6,"#59638f");c.strokeStyle="#59638f";c.lineWidth=7;c.beginPath();c.arc(x,218,22,0,7);c.stroke()}
   rr(720,36,480,76,6,"#05060c","#3a4470");tx("終点　"+D.station,960,92,48,C.led,"center",400,LED);
   rr(260,500,1400,150,18,"#2b6b5a");rr(240,640,1440,64,14,"#235546");c.fillStyle="#141a30";c.fillRect(0,760,W,124);c.fillStyle="#3a4470";c.fillRect(300,704,24,56);c.fillRect(1596,704,24,56);
-  const wake=ez((lt-t0-.9)/.35),bob=Math.sin(lt*2.2)*.02,th=(-.32+bob)*(1-wake)-Math.sin(wake*Math.PI)*.08;
-  // 乗客
-  ln(700,652,850,652,58,C.fg);ln(850,652,850,748,50,C.fg);
-  c.save();c.translate(700,650);c.rotate(th);ln(0,-10,0,-150,74,C.fg);dot(0,-232,46,C.fg);ln(8,-140,90,-30,30,"#c9cde0");c.restore();
-  if(wake<1)[0,1,2].forEach(i=>{const p=((lt*.45+i/3)%1);tx("Z",560-p*90+i*6,400-p*150,40+p*46,C.cool,"center",400,LED,(1-wake)*Math.sin(p*Math.PI))});
-  if(wake>0)tx("!",700,340,120,C.hot,"center",900,F,wake);
+  const wake=ez((lt-t0-.9)/.35),bob=Math.sin(lt*2.2)*.02,HS=D.hookStyle||"bakusui";
+  // 乗客(3パターン: bakusui=横向きで爆睡 / yokone=座席に横になる / utatane=正面でうたた寝 / yopparai=顔を赤くして酔っ払い / headphone=ヘッドホンで音楽を聴きながら寝落ち / yuka=床に座り込む酔っ払い / taiiku=体育座りの酔っ払い)
+  if(HS=="bakusui"){const th=(-.32+bob)*(1-wake)-Math.sin(wake*Math.PI)*.08;
+   ln(700,652,850,652,58,C.fg);ln(850,652,850,748,50,C.fg);
+   c.save();c.translate(700,650);c.rotate(th);ln(0,-10,0,-150,74,C.fg);dot(0,-232,46,C.fg);ln(8,-140,90,-30,30,"#c9cde0");c.restore();
+   if(wake<1)[0,1,2].forEach(i=>{const p=((lt*.45+i/3)%1);tx("Z",560-p*90+i*6,400-p*150,40+p*46,C.cool,"center",400,LED,(1-wake)*Math.sin(p*Math.PI))});
+   if(wake>0)tx("!",700,340,120,C.hot,"center",900,F,wake);
+  }else if(HS=="yuka"){const fx=760,lift=16*wake,th=(-.16+bob)*(1-wake);   // 酔っ払い: 床に座り込み、座席の下側に頭をもたれる(正面向き)
+   c.save();c.translate(fx-210,792);c.rotate(1.5);rr(-16,-30,32,60,7,"#c9cde0");c.fillStyle=C.hot;c.fillRect(-16,-12,32,22);c.restore();
+   ln(fx-34,806,fx-128,852,50,C.fg);ln(fx+34,806,fx+128,852,50,C.fg);
+   c.save();c.translate(fx,812);c.rotate(th);c.fillStyle=C.fg;c.beginPath();c.roundRect(-62,-128,124,130,34);c.fill();
+   ln(-62,-96,-98,-6,30,"#c9cde0");ln(62,-96,98,-6,30,"#c9cde0");c.strokeStyle=C.hot;c.lineWidth=12;c.beginPath();c.moveTo(-6,-126);c.lineTo(12,-62);c.stroke();
+   c.translate(0,-168-lift);c.rotate(-.2*(1-wake));dot(0,0,48,C.fg);c.globalAlpha=.85;c.fillStyle="#ff7d9a";c.beginPath();c.ellipse(-26,14,15,10,0,0,7);c.fill();c.beginPath();c.ellipse(26,14,15,10,0,0,7);c.fill();c.globalAlpha=1;c.restore();
+   if(wake<1){const p=(lt*.4)%1;tx("z",fx-110+p*40,560-p*120,34+p*30,C.cool,"center",400,LED,(1-wake)*Math.sin(p*Math.PI))}
+   if(wake>0)tx("!?",fx,540,120,C.hot,"center",900,F,wake);
+  }else if(HS=="taiiku"){const hx=700,hy=636,curl=(.42+bob)*(1-wake)+.08*wake;   // 酔っ払い: 座席の上で体育座りをしてうずくまる(横向き)
+   c.save();c.translate(hx-170,622);c.rotate(1.5);rr(-16,-30,32,60,7,"#c9cde0");c.fillStyle=C.hot;c.fillRect(-16,-12,32,22);c.restore();
+   ln(hx,hy-6,hx+78,hy-92,56,C.fg);ln(hx+78,hy-92,hx+112,hy-8,50,C.fg);
+   c.save();c.translate(hx,hy);c.rotate(curl);ln(0,-10,0,-138,74,C.fg);c.restore();
+   const sx=hx+Math.sin(curl)*138,sy=hy-Math.cos(curl)*138,kx=hx+78+26*wake,ky=hy-150-70*wake;   // 肩と頭の位置
+   dot(kx,ky,46,C.fg);c.globalAlpha=.85;c.fillStyle="#ff7d9a";c.beginPath();c.ellipse(kx+22,ky+12,14,9,0,0,7);c.fill();c.globalAlpha=1;
+   ln(sx,sy+10,hx+108,hy-40,30,"#c9cde0");
+   if(wake<1){const p=(lt*.4)%1;tx("z",hx+20-p*50,430-p*120,34+p*30,C.cool,"center",400,LED,(1-wake)*Math.sin(p*Math.PI))}
+   if(wake>0)tx("!?",kx,ky-80,120,C.hot,"center",900,F,wake);
+  }else if(HS=="yokone"){const up=wake+Math.sin(wake*Math.PI)*.12,py=612+38*wake;   // 座席に完全に横になって寝る。起こされると上体を起こす
+   ln(640,py+8,500,620,56,C.fg);ln(500,620,390,620,50,C.fg);
+   c.save();c.translate(640,py);c.rotate((Math.PI/2)*(1-up)+bob*(1-wake));ln(0,-10,0,-150,74,C.fg);dot(0,-232,46,C.fg);ln(10,-140,44,-36,30,"#c9cde0");c.restore();
+   if(wake<1)[0,1,2].forEach(i=>{const p=((lt*.45+i/3)%1);tx("Z",850-p*70+i*6,520-p*170,40+p*46,C.cool,"center",400,LED,(1-wake)*Math.sin(p*Math.PI))});
+   if(wake>0)tx("!",640,300,120,C.hot,"center",900,F,wake);
+  }else{const drunk=HS=="yopparai",hp=HS=="headphone",fx=720,
+    nodP=(lt*.55)%1,nod=drunk?0:(nodP<.75?nodP/.75:1-(nodP-.75)/.25)*30*(1-wake),   // うたた寝: ゆっくり沈んで、かくんと戻る
+    hic=drunk&&wake<1?Math.max(0,Math.sin(lt*3.6))**8:0,                           // 酔っ払い: ときどきしゃっくり
+    th=drunk?(-.34+bob*1.5)*(1-wake)-.07*wake:bob*.6*(1-wake);
+   ln(fx-36,664,fx-36,748,48,C.fg);ln(fx+36,664,fx+36,748,48,C.fg);
+   if(drunk){c.save();c.translate(fx-200,668);c.rotate(1.45);rr(-16,-30,32,60,7,"#c9cde0");c.fillStyle=C.hot;c.fillRect(-16,-12,32,22);c.restore()}   // 転がった空き缶
+   c.save();c.translate(fx,662-hic*10);c.rotate(th);
+   c.fillStyle=C.fg;c.beginPath();c.roundRect(-62,-170,124,172,34);c.fill();
+   ln(-60,-136,-34,-22,30,"#c9cde0");ln(60,-136,drunk?86:34,drunk?-10:-22,30,"#c9cde0");
+   if(drunk){c.strokeStyle=C.hot;c.lineWidth=12;c.beginPath();c.moveTo(-8,-168);c.lineTo(10,-96);c.stroke()}   // ゆるんだネクタイ
+   c.translate(0,-226+nod);c.rotate(drunk?-.22*(1-wake):nod/30*.1);dot(0,0,48,C.fg);
+   if(drunk){c.globalAlpha=.85;c.fillStyle="#ff7d9a";c.beginPath();c.ellipse(-26,14,15,10,0,0,7);c.fill();c.beginPath();c.ellipse(26,14,15,10,0,0,7);c.fill();c.globalAlpha=1}
+   if(hp){const off=wake>.5;c.strokeStyle=C.led;c.fillStyle=C.led;c.lineWidth=11;c.lineCap="round";   // ヘッドホン。起きると首に落ちる
+    c.beginPath();off?c.arc(0,40,50,.12*Math.PI,.88*Math.PI):c.arc(0,0,56,1.08*Math.PI,1.92*Math.PI);c.stroke();
+    [-1,1].forEach(d=>{c.beginPath();c.roundRect(d*(off?50:56)-12,off?22:-24,24,off?40:48,9);c.fill()})}
+   c.restore();
+   if(wake<1){
+    if(hp)[0,1,2,3].forEach(i=>{const p=((lt*.45+i/4)%1),sd=i%2?1:-1;tx(i%2?"♪":"♫",fx+sd*(90+p*70)+Math.sin(p*8+i)*14,440-p*190,40+p*26,C.led,"center",900,F,(1-wake)*Math.sin(p*Math.PI))});
+    else [0,1,2].slice(0,drunk?1:3).forEach(i=>{const p=((lt*.4+i/3)%1);tx("z",fx+(drunk?-120:110)+p*50,380-p*130,34+p*30,C.cool,"center",400,LED,(1-wake)*Math.sin(p*Math.PI))})}
+   if(wake>0)tx(drunk?"!?":"!",fx,drunk?310:330,120,C.hot,"center",900,F,wake);}
   // 車掌
   const wp=cl((lt-.5)/2.9),we=wp<.5?2*wp*wp:1-2*(1-wp)*(1-wp),cx=2060-(2060-960)*we,sw=wp<1?Math.sin(lt*9)*46:0,K="#5ec8ff";
   ln(cx,610,cx-22-sw,752,38,K);ln(cx,610,cx+22+sw,752,38,K);ln(cx,430,cx,600,80,K);dot(cx,352,46,K);
   rr(cx-54,292,108,34,8,K);c.fillStyle=K;c.fillRect(cx-78,318,60,12);c.fillStyle="#0b0e1c";c.fillRect(cx-54,312,108,6);
   const reach=ez((lt-t0+.35)/.3),tap=lt>t0&&lt<t0+1?Math.sin((lt-t0)*16)*14:0;
-  ln(cx-14,450,cx-14-(150+tap)*reach-20*(1-reach),450+(60-tap*.4)*reach+130*(1-reach),30,"#3d9fd1");
+  ln(cx-14,450,cx-14-(150+tap)*reach-20*(1-reach),450+((HS=="yuka"?170:60)-tap*.4)*reach+130*(1-reach),30,"#3d9fd1");
   const ba=A(0,0,.25);if(ba>0){rr(1010,150,560,130,22,"#f4f5f7",null,ba);c.globalAlpha=ba;c.fillStyle="#f4f5f7";c.beginPath();c.moveTo(1060,270);c.lineTo(1010,330);c.lineTo(1120,270);c.fill();c.globalAlpha=1;tx("終点ですよ",1290,238,72,"#12141c","center",900,F,ba)}
   // 駅名標へ切り替え → 地図にピン
   const a1=A(1,.3,1),a2=A(1,1.9,.8);
@@ -180,7 +228,7 @@ const draw={
       if(d>=1){c.font=`900 52px ${F}`;const lw=c.measureText(D.station).width+60;rr(px+56,py-128,lw,74,8,"#f4f5f7");tx(D.station,px+56+lw/2,py-72,52,"#12141c","center",900)}}
      c.restore()}}
    const sc=1-.42*a2,sx=960+520*a2,sy=435+30*(1-a1)-15*a2;c.save();c.translate(sx,sy);c.scale(sc,sc);
-   rr(-550,-215,1100,430,14,"#f4f5f7",null,a1);c.globalAlpha=a1;c.fillStyle="#2f8f4e";c.fillRect(-550,115,1100,34);c.globalAlpha=1;
+   rr(-550,-215,1100,430,14,"#f4f5f7",null,a1);c.globalAlpha=a1;c.fillStyle=D.signColor||"#2f8f4e";c.fillRect(-550,115,1100,34);c.globalAlpha=1;
    tx(D.station,0,-15,Math.min(190,960/D.station.length),"#12141c","center",900,F,a1);tx(D.kana,0,75,60,"#12141c","center",700,F,a1);tx(D.city,0,193,36,"#3b4258","center",700,F,a1);c.restore()}
  },
  rule(){
@@ -234,7 +282,7 @@ const draw={
    const jx=moving&&sweat?Math.sin(lt*38)*3:0,X=430+w+14+jx,Y=y+2+(moving?Math.sin(lt*22)*1.5:0);
    rr(430,y+6,w,64,4,hot?C.hot:C.led);c.strokeStyle=C.muted;c.lineWidth=4;c.beginPath();c.moveTo(430+w,y+46);c.lineTo(X+4,y+46);c.stroke();
    cab(X,Y,moving?lt*14:0);
-   if(sweat)for(let k=0;k<3;k++){const p=(lt*(moving?1.7:.8)+k/3)%1,dx=X+34-p*70-k*10,dy=Y-4-70*p+110*p*p;c.globalAlpha=1-p;c.fillStyle=C.cool;c.beginPath();c.moveTo(dx,dy-24);c.quadraticCurveTo(dx+17,dy,dx,dy+12);c.quadraticCurveTo(dx-17,dy,dx,dy-24);c.fill();c.globalAlpha=1}
+   {const n=Math.min(5,Math.max(1,Math.ceil(now/5000)));if(moving||hot)for(let k=0;k<n;k++){const p=(lt*.5+k/n)%1;bill(X+70-p*50+Math.sin(p*7+k*2)*34,Y-6-p*250,.85+.3*p,Math.sin(lt*15+k*1.7),Math.sin(p*Math.PI))}}
    const v=Math.round(now/100)*100;if(v>0)tx("約"+v.toLocaleString("ja-JP")+"円",hot?1200:X+140,hot?y+124:y+52,hot?52:44,hot?C.hot:C.fg,hot?"right":"left",900)});
   tx("深夜料金の目安",80,290,28,C.muted,"left",500,F,A(2));
   stamp(D.scores[1]);radar(radarNow());
@@ -275,12 +323,21 @@ const draw={
   stamp(D.scores[5]);radar(radarNow());
  },
  result(){
-  brand();tx(D.station+"駅の詰み度",80,230,64,C.fg,"left",900,F,A(0));
-  const d=(S.ss[2]-S.ss[1])*.55,a=A(1,d,1.4);
-  if(a>0){const num=String(Math.round(D.total*a));tx(num,80,520,300,C.led,"left",900,F,a);c.font=`900 300px ${F}`;tx("点 / 100",110+c.measureText(num).width,520,64,C.muted,"left",700,F,a)}
-  else tx("……",80,520,200,C.muted,"left",900,F,A(1));
-  const v=A(2,.8,.5);if(v>0){c.save();c.translate(360,690);c.rotate(-.05);c.scale(1.5-.5*v,1.5-.5*v);rr(-290,-74,580,148,8,null,C.hot,v);tx(D.verdict,0,D.verdict.length>5?28:34,Math.min(96,510/D.verdict.length),C.hot,"center",900,F,v);c.restore()}
-  tx("判定",80,592,34,C.muted,"left",700,F,A(2));
+  brand();tx(D.station+"駅の詰み度",80,200,60,C.fg,"left",900,F,A(0));
+  const d=(S.ss[2]-S.ss[1])*.4,a=A(1,d,2),val=D.total*a;
+  if(a>0){const num=String(Math.round(val));tx(num,80,470,250,C.led,"left",900,F,Math.min(1,a*4));c.font=`900 250px ${F}`;tx("点 / 100",104+c.measureText(num).width,470,60,C.muted,"left",700,F,Math.min(1,a*4))}
+  else tx("……",80,450,170,C.muted,"left",900,F,A(1));
+  // 判定のゲージ: 20点(最低)〜100点。針が合計点まで進む
+  const Z=[[20,50,"辛くない","#5ec8ff"],[50,60,"耐え","#7fd88f"],[60,70,"気合いと根性","#ffb02e"],[70,80,"キツい","#ff8a4c"],[80,100,"詰み","#ff5d7d"]],gx=80,gw=1120,gy=610,gh=84,GX=v=>gx+gw*(Math.max(20,Math.min(100,v))-20)/80,g0=A(0,.3),px=GX(val);
+  Z.forEach(([lo,hi,name,col],i)=>{const x0=GX(lo)+3,x1=GX(hi)-3,on=a>0&&val>=lo&&(val<hi||hi==100),done=a>=1&&on,pulse=done?.5+.5*Math.sin(lt*6):0;
+   c.globalAlpha=.2*g0;c.fillStyle=col;c.fillRect(x0,gy,x1-x0,gh);
+   if(a>0&&px>x0){c.globalAlpha=1;c.fillRect(x0,gy,Math.min(px,x1)-x0,gh)}c.globalAlpha=1;
+   if(done){c.strokeStyle=col;c.lineWidth=4+3*pulse;c.strokeRect(x0-4,gy-4,x1-x0+8,gh+8)}
+   let fs=on?38:28;c.font=`900 ${fs}px ${F}`;while(c.measureText(name).width>x1-x0+26&&fs>16){fs-=1;c.font=`900 ${fs}px ${F}`}
+   tx(name,(x0+x1)/2,gy+gh+52,fs,on?col:C.muted,"center",on?900:700,F,g0);
+   tx(String(lo),GX(lo),gy-14,24,C.muted,i?"center":"left",500,F,g0);if(hi==100)tx("100",GX(100),gy-14,24,C.muted,"right",500,F,g0)});
+  if(a>0){c.fillStyle=C.fg;c.fillRect(px-3,gy-10,6,gh+20);c.beginPath();c.moveTo(px,gy-12);c.lineTo(px-18,gy-44);c.lineTo(px+18,gy-44);c.closePath();c.fill()}
+  const v=A(2,.8,.5);if(v>0){c.save();c.translate(910,370);c.rotate(-.05);c.scale(1.5-.5*v,1.5-.5*v);rr(-270,-70,540,140,8,C.bg,C.hot,v);tx(D.verdict,0,D.verdict.length>5?26:32,Math.min(90,480/D.verdict.length),C.hot,"center",900,F,v);c.restore()}
   radar(D.scores);
  },
  outro(){

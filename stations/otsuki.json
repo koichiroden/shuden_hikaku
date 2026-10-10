@@ -7,6 +7,8 @@
   "line": "中央線",
   "origin": "東京",
   "km": 88,
+  "hook_style": "bakusui",
+  "sign_color": "#2f8f4e",
 
   "dep": "22:36",
   "arr": "23:36",

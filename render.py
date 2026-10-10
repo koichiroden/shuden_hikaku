@@ -28,8 +28,8 @@ def hm(s):
     return int(h) * 60 + int(m)
 
 
-def score_wait(minutes):          # 4時間未満=1点、20分ごとに+1、5時間以上=5点
-    return 1 if minutes < 240 else 2 if minutes < 260 else 3 if minutes < 280 else 4 if minutes < 300 else 5
+def score_wait(minutes):          # 3時間30分未満=1点、15分ごとに+1、4時間15分以上=5点
+    return 1 if minutes < 210 else 2 if minutes < 225 else 3 if minutes < 240 else 4 if minutes < 255 else 5
 
 
 def score_taxi(yen):
@@ -43,8 +43,8 @@ def score_count(n):               # 宿・暇つぶし・コンビニ共通: 4�
 score_stay = score_count
 
 
-def score_temp(c):                # 2℃以上=1点、2℃下がるごとに+1、-4℃未満=5点
-    return 1 if c >= 2 else 2 if c >= 0 else 3 if c >= -2 else 4 if c >= -4 else 5
+def score_temp(c):                # 3℃以上=1点、1℃下がるごとに+1、0℃未満=5点
+    return 1 if c >= 3 else 2 if c >= 2 else 3 if c >= 1 else 4 if c >= 0 else 5
 
 
 def verdict(total):
@@ -244,6 +244,10 @@ def build(st):
     if miss:
         sys.exit("設定ファイルに未入力の項目があります: " + ", ".join(miss))
     st["taxi"] = [t for t in st.get("taxi", []) if t.get("yen") is not None]
+    if (st.get("hook_style") or "bakusui") not in ("bakusui", "yokone", "utatane", "headphone", "yopparai", "yuka", "taiiku"):
+        sys.exit("hook_style は bakusui / yokone / utatane / headphone / yopparai / yuka / taiiku のどれかにしてください")
+    if not re.fullmatch(r"#[0-9a-fA-F]{6}", st.get("sign_color") or "#2f8f4e"):
+        sys.exit("sign_color は #2f8f4e のような6桁の色コードで指定してください")
     S, O = st["station"], st["origin"]
     dep, arr, first = hm(st["dep"]), hm(st["arr"]), hm(st["first"])
     if arr < dep:
@@ -283,10 +287,10 @@ def build(st):
               "「朝まで過ごせる場所」は、泊まれる場所、時間を潰せる場所、コンビニの3項目。「外で待てるか」は、気温です。"},
         {"k": "rule", "name": "採点基準",
          "t": "採点は6項目。それぞれ1点から5点で、点が高いほど詰みです。"
-              "始発までの待ち時間は、4時間未満なら1点、そこから20分延びるごとに1点上がり、5時間以上で5点。"
+              "始発までの待ち時間は、3時間30分未満なら1点、そこから15分延びるごとに1点上がり、4時間15分以上で5点。"
               f"タクシー代は、{tt['name']}駅まで5千円未満なら1点、3万円以上で5点。"
               "泊まれる場所、時間を潰せる場所、コンビニは、どれも4軒以上あれば1点、1軒減るごとに1点上がり、ゼロなら5点。"
-              "気温は、冬で採点します。夏の夜は暑くても朝を待てますが、冬の夜に屋外で過ごすのは命に関わるからです。1月の最低気温が2度以上なら1点、そこから2度下がるごとに1点上がり、マイナス4度未満で5点です。"
+              "気温は、冬で採点します。夏の夜は暑くても朝を待てますが、冬の夜に屋外で過ごすのは命に関わるからです。1月の最低気温が3度以上なら1点、そこから1度下がるごとに1点上がり、0度未満で5点です。"
               "帰れない時間と逃げ場のなさを重く見て項目ごとに重みをかけ、合計100点満点で採点します。"},
         {"k": "wait", "name": "① 始発までの待ち時間", "h": "① 始発までの待ち時間",
          "t": f"まず、何時間耐えればいいのか。そもそも、{O}駅を何時に出る電車が{S}までたどり着いてしまうのでしょうか。"
@@ -339,6 +343,8 @@ def build(st):
         "station": S, "kana": st["kana"], "pref": st["pref"], "prefCode": st["pref_code"], "city": st["city"],
         "line": st["line"], "origin": O, "km": st["km"], "channel": CHANNEL, "tagline": TAGLINE,
         "cps": st.get("chars_per_sec", 6.2),
+        "hookStyle": st.get("hook_style") or "bakusui",
+        "signColor": st.get("sign_color") or "#2f8f4e",
         "dep": dep / 60, "arr": arr / 60, "first": first / 60,
         "depL": st["dep"], "arrL": st["arr"], "firstL": st["first"], "waitL": wait_l,
         "taxi": [[t["name"], f"{num(t['km'])}km", t["yen"]] for t in st["taxi"]]
