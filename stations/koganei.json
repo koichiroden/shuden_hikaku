@@ -1,0 +1,75 @@
+{
+  "station": "小金井",
+  "hook_style": "utatane",
+  "sign_color": "#01b245",
+  "kana": "こがねい",
+  "pref": "栃木県",
+  "pref_code": "09",
+  "city": "栃木県下野市",
+  "line": "宇都宮線",
+  "origin": "東京",
+  "km": 88,
+  "dep": "23:32",
+  "arr": "01:03",
+  "first": "04:57",
+  "taxi": [
+    {
+      "name": "小山",
+      "km": 8,
+      "yen": 4600
+    },
+    {
+      "name": "久喜",
+      "km": 42,
+      "yen": 23000
+    },
+    {
+      "name": "大宮",
+      "km": 71,
+      "yen": 39000
+    }
+  ],
+  "taxi_to": {
+    "name": "東京",
+    "km": 102,
+    "yen": 59000
+  },
+  "taxi_comment": "寝過ごしの代償としては重すぎる金額で、財布での脱出は厳しそうです。",
+  "hotel": 0,
+  "hotel_name": "",
+  "netcafe": 0,
+  "netcafe_name": "",
+  "bath": 0,
+  "bath_name": "",
+  "karaoke": 0,
+  "karaoke_name": "",
+  "famires": 0,
+  "famires_name": "",
+  "conveni": 3,
+  "conveni_name": "セブンイレブン栃木小金井駅東店",
+  "conveni_walk_min": 3,
+  "temp_jan": -2.8,
+  "temp_aug": 22.5,
+  "temp_station": "小山",
+  "town_feature": "やはり北関東、栃木県の駅",
+  "winter_comment": "東京よりも厳しい夜を過ごすことになるでしょう。",
+  "summer_comment": "と、都心より涼しい夜を過ごせそうです。",
+  "review": "遠さ・店舗の少なさで高めの判定に。隣駅・小山までタクシーも1つの手かもしれません。",
+  "sources": {
+    "timetable": "JRアプリ",
+    "taxi": "ナビタイム",
+    "shop": "Googleマップ",
+    "temp": "気象庁"
+  },
+  "route": {
+    "region": "kanto",
+    "segments": [
+      {
+        "line": "上野東京ライン",
+        "from": "東京",
+        "to": "小金井"
+      }
+    ],
+    "extra": []
+  }
+}

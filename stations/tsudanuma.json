@@ -1,0 +1,75 @@
+{
+  "station": "津田沼",
+  "hook_style": "headphone",
+  "sign_color": "#01b245",
+  "kana": "つだぬま",
+  "pref": "千葉県",
+  "pref_code": "12",
+  "city": "千葉県習志野市",
+  "line": "総武線",
+  "origin": "三鷹",
+  "km": 47,
+  "dep": "23:44",
+  "arr": "01:04",
+  "first": "04:25",
+  "taxi": [
+    {
+      "name": "市川",
+      "km": 14,
+      "yen": 9000
+    },
+    {
+      "name": "錦糸町",
+      "km": 21,
+      "yen": 13000
+    },
+    {
+      "name": "新宿",
+      "km": 37,
+      "yen": 23000
+    }
+  ],
+  "taxi_to": {
+    "name": "三鷹",
+    "km": 50,
+    "yen": 29000
+  },
+  "taxi_comment": "千葉県内は10000円以下で戻れそうです。",
+  "hotel": 1,
+  "hotel_name": "ホテルメッツ津田沼",
+  "netcafe": 3,
+  "netcafe_name": "マンボー津田沼店",
+  "bath": 0,
+  "bath_name": "",
+  "karaoke": 5,
+  "karaoke_name": "カラオケ館津田沼店",
+  "famires": 0,
+  "famires_name": "",
+  "conveni": 5,
+  "conveni_name": "ローソン津田沼駅南口店",
+  "conveni_walk_min": 1,
+  "temp_jan": 0.4,
+  "temp_aug": 23.7,
+  "temp_station": "船橋",
+  "town_feature": "海からも遠くない町",
+  "winter_comment": "寒さは意外と厳しかったです",
+  "summer_comment": "ムシムシした夜を過ごすことになりそうです。",
+  "review": "施設の充実度、都心からの距離で、もしもがあっても選択肢がとれそうです。",
+  "sources": {
+    "timetable": "JRアプリ",
+    "taxi": "ナビタイム",
+    "shop": "Googleマップ",
+    "temp": "気象庁"
+  },
+  "route": {
+    "region": "kanto",
+    "segments": [
+      {
+        "line": "中央総武線各停",
+        "from": "三鷹",
+        "to": "津田沼"
+      }
+    ],
+    "extra": []
+  }
+}
