@@ -1,0 +1,70 @@
+{
+  "station": "蘇我",
+  "hook_style": "headphone",
+  "sign_color": "#038c33",
+  "kana": "そが",
+  "pref": "千葉県",
+  "pref_code": "12",
+  "city": "千葉県千葉市",
+  "line": "京葉線",
+  "origin": "東京",
+  "km": 43,
+  "dep": "00:06",
+  "arr": "00:56",
+  "first": "04:50",
+  "taxi": [
+    {
+      "name": "海浜幕張",
+      "km": 13,
+      "yen": 7000
+    },
+    {
+      "name": "新浦安",
+      "km": 34,
+      "yen": 19000
+    }
+  ],
+  "taxi_to": {
+    "name": "東京",
+    "km": 48,
+    "yen": 29000
+  },
+  "taxi_comment": "千葉市内でしたら財布と相談ですが、都内に近づくにつれ、厳しくなり、東京はぎりぎり4点の水準に。",
+  "hotel": 3,
+  "hotel_name": "ドーミーイン千葉City Soga",
+  "netcafe": 0,
+  "netcafe_name": "",
+  "bath": 0,
+  "bath_name": "",
+  "karaoke": 2,
+  "karaoke_name": "カラオケまねきねこ蘇我駅前店",
+  "famires": 0,
+  "famires_name": "",
+  "conveni": 5,
+  "conveni_name": "セブンイレブン千葉蘇我駅前店",
+  "conveni_walk_min": 1,
+  "temp_jan": 2.4,
+  "temp_aug": 24.3,
+  "temp_station": "千葉",
+  "town_feature": "温暖な房総半島の付け根の駅で",
+  "winter_comment": "氷点下リスクは少ないでしょう。",
+  "summer_comment": "海からの湿った風との戦いです。",
+  "review": "タクシーで脱出するか、宿に頼るか、はたまた始発まで待つか。どれも選択肢としてとれそうです。\nまた千葉県最大のターミナル、千葉駅まで4kmと、頑張って気合と根性歩くという選択肢も取れなくはなさそうです。",
+  "sources": {
+    "timetable": "JRアプリ",
+    "taxi": "ナビタイム",
+    "shop": "Googleマップ",
+    "temp": "気象庁"
+  },
+  "route": {
+    "region": "kanto",
+    "segments": [
+      {
+        "line": "京葉線",
+        "from": "東京",
+        "to": "蘇我"
+      }
+    ],
+    "extra": []
+  }
+}

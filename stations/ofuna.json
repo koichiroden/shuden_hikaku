@@ -1,0 +1,75 @@
+{
+  "station": "大船",
+  "hook_style": "yuka",
+  "sign_color": "#018935",
+  "kana": "おおふな",
+  "pref": "神奈川県",
+  "pref_code": "14",
+  "city": "神奈川県鎌倉市",
+  "line": "横須賀線",
+  "origin": "東京",
+  "km": 49,
+  "dep": "23:50",
+  "arr": "00:40",
+  "first": "05:04",
+  "taxi": [
+    {
+      "name": "横浜",
+      "km": 22,
+      "yen": 12000
+    },
+    {
+      "name": "武蔵小杉",
+      "km": 38,
+      "yen": 21000
+    },
+    {
+      "name": "千葉（参考）",
+      "km": 89,
+      "yen": 51000
+    }
+  ],
+  "taxi_to": {
+    "name": "東京",
+    "km": 54,
+    "yen": 31000
+  },
+  "taxi_comment": "横浜市内は頑張れそうですが、多摩川を超えると一気に厳しい金額へ。",
+  "hotel": 3,
+  "hotel_name": "相鉄フレッサイン鎌倉大船駅東口",
+  "netcafe": 2,
+  "netcafe_name": "快活CLUB大船駅前店",
+  "bath": 0,
+  "bath_name": "",
+  "karaoke": 5,
+  "karaoke_name": "カラオケ館大船店",
+  "famires": 0,
+  "famires_name": "",
+  "conveni": 10,
+  "conveni_name": "ファミリーマート大船駅前店",
+  "conveni_walk_min": 1,
+  "temp_jan": 2.7,
+  "temp_aug": 24.3,
+  "temp_station": "横浜",
+  "town_feature": "温暖な神奈川エリアで、海からも遠くない駅",
+  "winter_comment": "比較的穏やかに過ごせそうです。",
+  "summer_comment": "ムシムシした夜を過ごすことになりそうです。",
+  "review": "横須賀線基準ではやや待ちますが、4時台には根岸線の始発もあり、横浜・品川・東京などには抜けられるでしょう。また、施設も充実していたため耐えの評価に。",
+  "sources": {
+    "timetable": "JRアプリ",
+    "taxi": "ナビタイム",
+    "shop": "Googleマップ",
+    "temp": "気象庁"
+  },
+  "route": {
+    "region": "kanto",
+    "segments": [
+      {
+        "line": "横須賀線総武快速線",
+        "from": "東京",
+        "to": "大船"
+      }
+    ],
+    "extra": []
+  }
+}

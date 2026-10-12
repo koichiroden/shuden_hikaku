@@ -1,0 +1,70 @@
+{
+  "station": "取手",
+  "hook_style": "taiiku",
+  "sign_color": "#038c33",
+  "kana": "とりで",
+  "pref": "茨城県",
+  "pref_code": "08",
+  "city": "茨城県取手市",
+  "line": "常磐線",
+  "origin": "上野",
+  "km": 40,
+  "dep": "00:00",
+  "arr": "00:39",
+  "first": "04:44",
+  "taxi": [
+    {
+      "name": "柏",
+      "km": 10,
+      "yen": 5000
+    },
+    {
+      "name": "松戸",
+      "km": 21,
+      "yen": 11000
+    }
+  ],
+  "taxi_to": {
+    "name": "上野",
+    "km": 44,
+    "yen": 26000
+  },
+  "taxi_comment": "千葉県内は財布と要相談です。",
+  "hotel": 3,
+  "hotel_name": "東横INN取手駅東口",
+  "netcafe": 0,
+  "netcafe_name": "",
+  "bath": 0,
+  "bath_name": "",
+  "karaoke": 2,
+  "karaoke_name": "カラオケBanBan取手駅前店",
+  "famires": 0,
+  "famires_name": "",
+  "conveni": 5,
+  "conveni_name": "ローソン取手駅東店",
+  "conveni_walk_min": 1,
+  "temp_jan": -1.7,
+  "temp_aug": 23,
+  "temp_station": "我孫子",
+  "town_feature": "茨城県の玄関口の駅",
+  "winter_comment": "都内と比べ、やや寒さが厳しいでしょう",
+  "summer_comment": "内陸部ですが、ムシムシした夜を過ごすことになりそうです。",
+  "review": "タクシーで脱出するか、宿に頼るか、はたまた始発まで待つか。どれも選択肢としてとれそうですが、施設が限られました。",
+  "sources": {
+    "timetable": "JRアプリ",
+    "taxi": "ナビタイム",
+    "shop": "Googleマップ",
+    "temp": "気象庁"
+  },
+  "route": {
+    "region": "kanto",
+    "segments": [
+      {
+        "line": "常磐線",
+        "from": "上野",
+        "to": "取手"
+      }
+    ],
+    "extra": []
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "station": "若葉台",
+  "hook_style": "bakusui",
+  "sign_color": "#ed02ce",
+  "kana": "わかばだい",
+  "pref": "神奈川県",
+  "pref_code": "14",
+  "city": "神奈川県川崎市",
+  "line": "京王相模原線",
+  "origin": "新宿",
+  "km": 24,
+  "dep": "00:16",
+  "arr": "01:01",
+  "first": "04:52",
+  "taxi": [
+    {
+      "name": "調布",
+      "km": 9,
+      "yen": 5100
+    },
+    {
+      "name": "明大前",
+      "km": 21,
+      "yen": 15000
+    },
+    {
+      "name": "本八幡（参考）",
+      "km": 51,
+      "yen": 32000
+    }
+  ],
+  "taxi_to": {
+    "name": "新宿",
+    "km": 26,
+    "yen": 18000
+  },
+  "taxi_comment": "お金で解決する場合は財布と要相談です。",
+  "hotel": 0,
+  "hotel_name": "",
+  "netcafe": 0,
+  "netcafe_name": "",
+  "bath": 0,
+  "bath_name": "",
+  "karaoke": 0,
+  "karaoke_name": "",
+  "famires": 0,
+  "famires_name": "",
+  "conveni": 4,
+  "conveni_name": "ファミリーマート若葉台駅前店",
+  "conveni_walk_min": 2,
+  "temp_jan": -0.7,
+  "temp_aug": 23,
+  "temp_station": "府中",
+  "town_feature": "川崎といえど、多摩地域との境界線の駅",
+  "winter_comment": "やや寒さが厳しいでしょう",
+  "summer_comment": "ムシムシした夜を過ごすことになりそうです。",
+  "review": "落ち着いたベッドタウンだからか、深夜も営業している施設の少なさが響きました。",
+  "sources": {
+    "timetable": "JRアプリ",
+    "taxi": "ナビタイム",
+    "shop": "Googleマップ",
+    "temp": "気象庁"
+  },
+  "route": {
+    "region": "kanto",
+    "segments": [
+      {
+        "line": "京王線",
+        "from": "新宿",
+        "to": "調布"
+      },
+      {
+        "line": "京王相模原線",
+        "from": "調布",
+        "to": "若葉台"
+      }
+    ],
+    "extra": []
+  }
+}

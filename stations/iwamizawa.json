@@ -1,0 +1,70 @@
+{
+  "station": "岩見沢",
+  "hook_style": "bakusui",
+  "sign_color": "#01df56",
+  "kana": "いわみざわ",
+  "pref": "北海道",
+  "pref_code": "01",
+  "city": "北海道岩見沢市",
+  "line": "函館本線",
+  "origin": "札幌",
+  "km": 41,
+  "dep": "23:59",
+  "arr": "00:42",
+  "first": "05:55",
+  "taxi": [
+    {
+      "name": "江別",
+      "km": 21,
+      "yen": 9000
+    },
+    {
+      "name": "白石",
+      "km": 40,
+      "yen": 17000
+    }
+  ],
+  "taxi_to": {
+    "name": "札幌",
+    "km": 43,
+    "yen": 19000
+  },
+  "taxi_comment": "タクシーがつかまり、財布に余裕があれば札幌市内への期間も手でしょうか。",
+  "hotel": 3,
+  "hotel_name": "岩見沢ホテル5条",
+  "netcafe": 0,
+  "netcafe_name": "",
+  "bath": 0,
+  "bath_name": "",
+  "karaoke": 1,
+  "karaoke_name": "カラオケBIG1※4時まで",
+  "famires": 0,
+  "famires_name": "",
+  "conveni": 4,
+  "conveni_name": "セブンイレブン岩見沢1条店",
+  "conveni_walk_min": 5,
+  "temp_jan": -9,
+  "temp_aug": 18,
+  "temp_station": "岩見沢",
+  "town_feature": "さすがは北海道の駅",
+  "winter_comment": "冬は本気の寒さです。",
+  "summer_comment": "北海道の冷涼な夜を過ごせそうです。",
+  "review": "暇つぶしスポットの少なさと、異次元の冬の寒さを資金力と運でカバーするしかないでしょう。",
+  "sources": {
+    "timetable": "JRアプリ",
+    "taxi": "ナビタイム",
+    "shop": "Googleマップ",
+    "temp": "気象庁"
+  },
+  "route": {
+    "region": "hokkaido",
+    "segments": [
+      {
+        "line": "函館本線(小樽〜岩見沢)",
+        "from": "札幌",
+        "to": "岩見沢"
+      }
+    ],
+    "extra": []
+  }
+}
