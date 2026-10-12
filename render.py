@@ -336,7 +336,7 @@ def build(st):
     path, route, lines = resolve_route(st["route"])
     pts = [tuple(p) for p in path]
     o, e = pts[0], pts[-1]
-    view_intro = map_view(pts, 1120, 262, 0.3, 0.84)
+    view_intro = map_view(pts, 1120, 262 - 96, 0.3, 0.84)   # 上下に駅名の余白を残す
     view_hook = map_view([o, e], 1020, 690, 2.2, 0.45,
                          center=(e[0] * 0.6 + o[0] * 0.4, e[1] * 0.6 + o[1] * 0.4))
     data = {

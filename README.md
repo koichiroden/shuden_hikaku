@@ -104,7 +104,7 @@ python render.py stations/otsuki.json --audio narration.wav # 1本の音声を�
 }
 ```
 
-- `region`: `kanto`(関東)か `kansai`(関西・東海)
+- `region`: `kanto`(関東)、`kansai`(関西・東海)、`nagoya`(名古屋圏)、`sendai`(仙台圏)、`hokkaido`(札幌圏)
 - `segments`: 路線名と駅名は `rail.json` にある名前で書きます。区間の始点と終点の駅名が地図に出て、途中の駅は小さな点になります
 - `extra`: 路線データにない駅を、緯度と経度で直接指定します。区間の後ろに直線でつなぎます。4つ目を `true` にすると駅名が出ます
 - 以前の形式(駅を `[駅名, 緯度, 経度, true]` で並べたリスト)もそのまま使えます
@@ -131,7 +131,7 @@ python render.py stations/otsuki.json --audio narration.wav # 1本の音声を�
 - `Dockerfile` Render用の実行環境(ffmpeg、日本語フォント、Chromium入り)
 - `template.html` アニメーション本体。演出を変えるときはここを編集
 - `pref.json` 都道府県の境界データ(全国)
-- `rail.json` 路線の線形と駅のデータ(関東84路線、関西・東海67路線。駅レース動画のリポジトリのデータから変換)
+- `rail.json` 路線の線形と駅のデータ(関東84路線、関西・東海67路線は駅レース動画のリポジトリのデータから変換。名古屋圏は関西・東海のデータから名古屋周辺の路線を抜き出したもの。仙台圏3路線と札幌圏3路線は、公開されている駅の位置データ(open-data-jp-railway-stations)から駅をなめらかにつないだ線)
 - `stations/` 駅ごとの設定
 
 ## 注意

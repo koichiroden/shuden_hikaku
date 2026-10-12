@@ -220,7 +220,7 @@ const draw={
    if(a2<1){c.globalAlpha=a1*(1-a2);c.fillStyle="#141a30";c.fillRect(0,760,W,124);c.fillStyle="#e8d44d";c.fillRect(0,760,W,10);c.globalAlpha=1}
    if(a2>0){const B={x:70,y:110,w:1020,h:690},M=D.mapHook,P=geoMap(B,M.lon0,M.lon1,M.latc,D.prefCode,B.w*a2);
     if(a2>=1){c.save();c.beginPath();c.rect(B.x,B.y,B.w,B.h);c.clip();
-     drawLabels("hook",B,P,M.lon0,M.lon1,M.latc,D.prefCode,28);
+     drawLabels("hook",B,P,M.lon0,M.lon1,M.latc,D.prefCode,28,[D.route[0],D.route[D.route.length-1]]);
      const o=D.route[0],[ox,oy]=P(o[2],o[1]);c.fillStyle=C.fg;c.beginPath();c.arc(ox,oy,9,0,7);c.fill();tx(o[0],ox+16,oy+10,30,C.fg,"left",700);
      const e=D.route[D.route.length-1],[px,py]=P(e[2],e[1]),d=cl((lt-S.ss[1]-2.8)/.55),b=d<1?1-Math.pow(1-d,2):1,dy=-420*(1-b)-(d>=1?Math.max(0,Math.sin((lt-S.ss[1]-3.35)*9))*26*Math.exp(-(lt-S.ss[1]-3.35)*4):0);
      if(d>0){if(d>=1){const rp=((lt-S.ss[1]-3.35)*.8)%1;c.strokeStyle=C.hot;c.globalAlpha=1-rp;c.lineWidth=5;c.beginPath();c.ellipse(px,py,20+rp*70,(20+rp*70)*.45,0,0,7);c.stroke();c.globalAlpha=1}
